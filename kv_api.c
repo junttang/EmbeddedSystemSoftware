@@ -97,8 +97,9 @@ const void _Put(putArgs *args) {
 
     // Initialize if it's first time
     if (args->firstFlag) {
-        strncpy(key, "0000", MAX_KEY_LEN);
+        strncpy(key, "0000", MAX_KEY_LEN); shmOut->fndBuf = 0;
         strncpy(value, initValueBuf, MAX_TEXT_LEN);
+        memcpy(shmOut->textlcdBuf, value, MAX_TEXT_LEN);
         numMode = 1;            // Default is number input mode
         index = 0;              // Start filling the text string from idx 0 
         prev = -1;              // Previous keypad info (for alphabet mode)
@@ -308,7 +309,8 @@ const void _Get(getArgs *args) {
 
     // Initialize if it's first time
     if (args->firstFlag) {
-        strncpy(key, "0000", MAX_KEY_LEN);
+        strncpy(key, "0000", MAX_KEY_LEN); shmOut->fndBuf = 0;
+        memcpy(shmOut->textlcdBuf, initValueBuf, MAX_TEXT_LEN);
         index = 0;              // Start filling the key string from idx 0 
         changed = 1;            // Is it changed?
         inputStart = 0;         // Initial LED is LED_1
@@ -347,9 +349,9 @@ const void _Get(getArgs *args) {
             if (valueFound == 1)
                 sprintf(inserted, "(%d, %s, %s)", shmMemtable->totalPutCnt + order + 1, key, value);
             else sprintf(inserted, "(%d, %s, %s)", order, key, value);
-            memcpy(shmOut->textlcdBuf, inserted, MAX_TEXT_LEN);
         }
 
+        memcpy(shmOut->textlcdBuf, inserted, MAX_TEXT_LEN);
         strncpy(key, "0000", MAX_KEY_LEN);
         strncpy(value, initValueBuf, MAX_TEXT_LEN);
         shmOut->fndBuf = 0;
@@ -434,20 +436,8 @@ const void _Merge(mergeArgs* args) {
     shmOut->used[FND] = 0;
     shmOut->used[LED] = 0;
     shmOut->used[TEXT_LCD] = 1;
-    shmOut->used[MOTOR] = 1; 
+    shmOut->used[MOTOR] = 1; shmOut->motorOn = 0;
 
-    // Get the device time
-    time_t devTime; time(&devTime);
-    const struct tm *timeInfo = localtime(&devTime);
-    const int devSecond = timeInfo->tm_sec; int mergeSecond;
-
-    // Turn on MOROR for a second (in case of MERGE occured previously)
-    if (shmOut->motorOn) {
-        if (devSecond == (mergeSecond + 2)) 
-            shmOut->motorOn = 0;
-    }
-    else shmOut->motorOn = 0;
-    
     // Perform MERGE when reset pressed!
     if (args->resetFlag) {
         strncpy(text, initValueBuf, MAX_TEXT_LEN);
@@ -497,9 +487,7 @@ const void _Merge(mergeArgs* args) {
 #ifdef DEBUG_PROJ
             printf("---> %d pairs are inserted to the new file %s\n", mergeFlag, text);
 #endif      
-            // Turn on MOTOR for a second when MERGE occurs
-            const struct tm *timeInfo = localtime(&devTime);
-            mergeSecond = timeInfo->tm_sec;
+            shmOut->waitFlag = 1;   // Wait for a second (MOTOR)
         }
         args->resetFlag = 0;
     }

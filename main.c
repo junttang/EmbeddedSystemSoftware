@@ -53,7 +53,7 @@ int main(void) {
 
 /* Main Process handler */
 const int mainProcess(const int semID) {
-    static MODE_TYPE mode = PUT, prevMode = PUT;
+    static MODE_TYPE mode = PUT;
     bool exitFlag = 0;
     DEVICES dv;
 

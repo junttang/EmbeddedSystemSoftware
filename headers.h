@@ -25,4 +25,7 @@
 #include "kv_api.h"
 #include "main.h"
 
+// All header files necessary for the project are gathered together here!
+// You just need to simply include this 'header.h' file within the source codes.
+
 #endif /* _HEADERS_H_ */
